@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Attendance Tracker</title>
+  <style>
+    :root {
+      --color-background: var(--color-cream-50, #fcfcf9);
+      --color-surface: var(--color-cream-100, #fffffd);
+      --color-text: var(--color-slate-900, #13343b);
+      --color-primary: var(--color-teal-500, #21808d);
+      --color-primary-hover: var(--color-teal-600, #1d7480);
+      --color-border: rgba(94,82,64,0.2);
+      --radius-base: 8px;
+      --space-16: 16px;
+    }
+    html, body {
+      background: var(--color-background);
+      color: var(--color-text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+    .container {
+      max-width: 480px;
+      margin: 40px auto;
+      background: var(--color-surface);
+      border-radius: var(--radius-base);
+      box-shadow: 0 2px 12px rgba(31,33,33,0.1);
+      padding: var(--space-16);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 24px;
+      color: var(--color-primary);
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px 12px;
+      margin-bottom: 16px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-base);
+      font-size: 16px;
+      box-sizing: border-box;
+      background: var(--color-surface);
+      color: var(--color-text);
+    }
+    .btn {
+      width: 100%;
+      padding: 10px 16px;
+      background: var(--color-primary);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 500;
+      border: none;
+      border-radius: var(--radius-base);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .btn:hover:not(:disabled) {
+      background: var(--color-primary-hover);
+    }
+    .error {
+      color: #c0152f;
+      font-size: 14px;
+      margin-bottom: 10px;
+      display: none;
+    }
+    .success {
+      color: #21808d;
+      font-size: 15px;
+      margin-bottom: 10px;
+      display: none;
+    }
+    .attendance-list {
+      margin-top: 36px;
+    }
+    .attendance-list h2 {
+      margin-bottom: 12px;
+      font-size: 20px;
+      color: var(--color-primary);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 8px;
+      border-bottom: 1px solid var(--color-border);
+      text-align: left;
+      font-size: 15px;
+    }
+    th {
+      background: #f4f5f5;
+      color: var(--color-text);
+    }
+    @media (max-width: 600px) {
+      .container {
+        margin: 10px;
+        padding: 10px;
+      }
+      .attendance-list h2 {
+        font-size: 17px;
+      }
+    }
+  </style>
+</head>
+<body>
+    <div class="container">
+      <h1>Attendance Tracker</h1>
+      <form id="attendance-form" autocomplete="off">
+        <label for="name">Name</label>
+        <input type="text" id="name" required placeholder="Enter person's name" />
+        
+        <label for="location-lat">Latitude</label>
+        <input type="number" step="any" id="location-lat" placeholder="Getting location..." readonly />
+
+        <label for="location-lng">Longitude</label>
+        <input type="number" step="any" id="location-lng" placeholder="Getting location..." readonly />
+        
+        <label for="distance">Distance (meter)</label>
+        <input type="number" id="distance" placeholder="Calculating distance..." readonly />
+
+        <div class="error" id="error-msg"></div>
+        <div class="success" id="success-msg"></div>
+        <button type="submit" class="btn" id="submit-btn">Save Attendance</button>
+        <button type="button" class="btn" id="get-location-btn" style="background: #a8a9a9; margin-top: 8px;">Get Location</button>
+      </form>
+      <div class="attendance-list" id="attendance-list">
+        <h2>Attendance Entries</h2>
+        <table id="attendance-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Lat</th>
+              <th>Lng</th>
+              <th>Distance (m)</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <script>
+      // Simulate a database with an in-memory array
+      let db = [];
+      let referencePoint = { lat: -6.2088, lng: 106.8456 }; // Jakarta, Indonesia
+      let currentLocation = null;
+
+      // Haversine formula: calculate distance between two coordinates (in meters)
+      function calculateDistance(lat1, lng1, lat2, lng2) {
+        const R = 6371000; // Earth radius in meters
+        const φ1 = (lat1 * Math.PI) / 180;
+        const φ2 = (lat2 * Math.PI) / 180;
+        const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+        const Δλ = ((lng2 - lng1) * Math.PI) / 180;
+        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+      }
+
+      // Request geolocation from user
+      function getLocation() {
+        const errorElem = document.getElementById('error-msg');
+        errorElem.style.display = 'none';
+
+        if (!navigator.geolocation) {
+          errorElem.textContent = 'Geolocation not supported by this browser.';
+          errorElem.style.display = 'block';
+          return;
+        }
+
+        document.getElementById('get-location-btn').disabled = true;
+        document.getElementById('get-location-btn').textContent = 'Getting location...';
+
+        navigator.geolocation.getCurrentPosition(
+          function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            const distance = calculateDistance(lat, lng, referencePoint.lat, referencePoint.lng);
+
+            currentLocation = { lat, lng, distance };
+
+            document.getElementById('location-lat').value = lat.toFixed(6);
+            document.getElementById('location-lng').value = lng.toFixed(6);
+            document.getElementById('distance').value = distance.toFixed(2);
+
+            document.getElementById('get-location-btn').disabled = false;
+            document.getElementById('get-location-btn').textContent = 'Update Location';
+
+            if (distance <= 10) {
+              errorElem.textContent = `⚠️ Distance ${distance.toFixed(2)}m is ≤ 10m. You must be >10m away to save attendance.`;
+              errorElem.style.display = 'block';
+              document.getElementById('submit-btn').disabled = true;
+            } else {
+              document.getElementById('submit-btn').disabled = false;
+            }
+          },
+          function(error) {
+            errorElem.textContent = 'Unable to get location: ' + error.message;
+            errorElem.style.display = 'block';
+            document.getElementById('get-location-btn').disabled = false;
+            document.getElementById('get-location-btn').textContent = 'Get Location';
+          }
+        );
+      }
+
+      function renderTable() {
+        const tbody = document.getElementById('attendance-table').querySelector('tbody');
+        tbody.innerHTML = '';
+        for(const entry of db) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = '<td>' + 
+            entry.name + '</td><td>' +
+            entry.lat + '</td><td>' +
+            entry.lng + '</td><td>' +
+            entry.distance + '</td><td>' +
+            entry.time + '</td>';
+          tbody.appendChild(tr);
+        }
+      }
+
+      document.getElementById('get-location-btn').addEventListener('click', getLocation);
+
+      document.getElementById('attendance-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const name = document.getElementById('name').value.trim();
+        const lat = parseFloat(document.getElementById('location-lat').value);
+        const lng = parseFloat(document.getElementById('location-lng').value);
+        const distance = parseFloat(document.getElementById('distance').value);
+
+        const errorElem = document.getElementById('error-msg');
+        const successElem = document.getElementById('success-msg');
+        errorElem.style.display = 'none';
+        successElem.style.display = 'none';
+
+        if (!name) {
+          errorElem.textContent = "Please enter a name.";
+          errorElem.style.display = 'block';
+          return;
+        }
+
+        if (isNaN(lat) || isNaN(lng) || isNaN(distance)) {
+          errorElem.textContent = "Please get location first.";
+          errorElem.style.display = 'block';
+          return;
+        }
+
+        // Reject if distance <= 10m
+        if (distance <= 10) {
+          errorElem.textContent = `❌ Distance ${distance.toFixed(2)}m is ≤ 10m. Attendance REJECTED. You must be >10m away.`;
+          errorElem.style.display = 'block';
+          return;
+        }
+
+        // Save to "database"
+        db.push({
+          name,
+          lat: lat.toFixed(6),
+          lng: lng.toFixed(6),
+          distance: distance.toFixed(2),
+          time: new Date().toLocaleString()
+        });
+
+        renderTable();
+
+        successElem.textContent = `✓ Attendance saved! Distance: ${distance.toFixed(2)}m`;
+        successElem.style.display = 'block';
+
+        document.getElementById('name').value = '';
+        document.getElementById('name').focus();
+      });
+
+      // Initial table render
+      renderTable();
+
+      // Focus the name input on load
+      document.getElementById('name').focus();
+    </script>
+</body>
+</html>

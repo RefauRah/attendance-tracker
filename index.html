@@ -157,7 +157,7 @@
     <script>
       // Simulate a database with an in-memory array
       let db = [];
-      let referencePoint = { lat: -6.2088, lng: 106.8456 }; // Jakarta, Indonesia
+      let referencePoint = { lat: -7.054970805597252, lng: 107.56087285759028 }; // Bandung, Indonesia
       let currentLocation = null;
 
       // Haversine formula: calculate distance between two coordinates (in meters)
@@ -201,8 +201,8 @@
             document.getElementById('get-location-btn').disabled = false;
             document.getElementById('get-location-btn').textContent = 'Update Location';
 
-            if (distance <= 10) {
-              errorElem.textContent = `⚠️ Distance ${distance.toFixed(2)}m is ≤ 10m. You must be >10m away to save attendance.`;
+            if (distance > 10) {
+              errorElem.textContent = `⚠️ Distance ${distance.toFixed(2)}m is > 10m. Attendance REJECTED. You must be within 10m.`;
               errorElem.style.display = 'block';
               document.getElementById('submit-btn').disabled = true;
             } else {
@@ -260,9 +260,9 @@
           return;
         }
 
-        // Reject if distance <= 10m
-        if (distance <= 10) {
-          errorElem.textContent = `❌ Distance ${distance.toFixed(2)}m is ≤ 10m. Attendance REJECTED. You must be >10m away.`;
+        // Reject if distance > 10m
+        if (distance > 10) {
+          errorElem.textContent = `❌ Distance ${distance.toFixed(2)}m exceeds 10m limit. Attendance REJECTED. You must be within 10m.`;
           errorElem.style.display = 'block';
           return;
         }

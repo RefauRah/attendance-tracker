@@ -490,12 +490,26 @@
             // Save to in-memory db
             db.push(entry);
 
-            // TODO: Send to backend API
-            fetch('/api/attendance/save', {
+            fetch('http://localhost:8080/api/attendance/save', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(entry)
-            }).then(res => res.json()).catch(err => console.error(err));
+            })
+            .then(async res => {
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${data.error || 'Unknown error'}`);
+                }
+                console.log('✅ Saved successfully:', data);
+                return data;
+            })
+            .catch(err => {
+                console.error('❌ Fetch failed:', err.message);
+                errorElem.textContent = `Failed to save: ${err.message}`;
+                errorElem.style.display = 'block';
+            });
+
+
 
             renderTable();
 

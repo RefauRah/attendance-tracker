@@ -490,7 +490,7 @@
             // Save to in-memory db
             db.push(entry);
 
-            fetch('http://localhost:8080/api/attendance/save', {
+            fetch('/api/attendance/save', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(entry)

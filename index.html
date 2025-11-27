@@ -1,295 +1,515 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Attendance Tracker</title>
-  <style>
-    :root {
-      --color-background: var(--color-cream-50, #fcfcf9);
-      --color-surface: var(--color-cream-100, #fffffd);
-      --color-text: var(--color-slate-900, #13343b);
-      --color-primary: var(--color-teal-500, #21808d);
-      --color-primary-hover: var(--color-teal-600, #1d7480);
-      --color-border: rgba(94,82,64,0.2);
-      --radius-base: 8px;
-      --space-16: 16px;
-    }
-    html, body {
-      background: var(--color-background);
-      color: var(--color-text);
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      margin: 0;
-      padding: 0;
-      height: 100%;
-    }
-    .container {
-      max-width: 480px;
-      margin: 40px auto;
-      background: var(--color-surface);
-      border-radius: var(--radius-base);
-      box-shadow: 0 2px 12px rgba(31,33,33,0.1);
-      padding: var(--space-16);
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 24px;
-      color: var(--color-primary);
-    }
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 500;
-    }
-    input, select {
-      width: 100%;
-      padding: 8px 12px;
-      margin-bottom: 16px;
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-base);
-      font-size: 16px;
-      box-sizing: border-box;
-      background: var(--color-surface);
-      color: var(--color-text);
-    }
-    .btn {
-      width: 100%;
-      padding: 10px 16px;
-      background: var(--color-primary);
-      color: #fff;
-      font-size: 16px;
-      font-weight: 500;
-      border: none;
-      border-radius: var(--radius-base);
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    .btn:hover:not(:disabled) {
-      background: var(--color-primary-hover);
-    }
-    .error {
-      color: #c0152f;
-      font-size: 14px;
-      margin-bottom: 10px;
-      display: none;
-    }
-    .success {
-      color: #21808d;
-      font-size: 15px;
-      margin-bottom: 10px;
-      display: none;
-    }
-    .attendance-list {
-      margin-top: 36px;
-    }
-    .attendance-list h2 {
-      margin-bottom: 12px;
-      font-size: 20px;
-      color: var(--color-primary);
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 8px;
-      border-bottom: 1px solid var(--color-border);
-      text-align: left;
-      font-size: 15px;
-    }
-    th {
-      background: #f4f5f5;
-      color: var(--color-text);
-    }
-    @media (max-width: 600px) {
-      .container {
-        margin: 10px;
-        padding: 10px;
-      }
-      .attendance-list h2 {
-        font-size: 17px;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Tracker</title>
+    <style>
+        :root {
+            --color-background: #fcfcf9;
+            --color-surface: #fffffd;
+            --color-text: #13343b;
+            --color-primary: #21808d;
+            --color-primary-hover: #1d7480;
+            --color-success: #22c55e;
+            --color-error: #ef4444;
+            --color-warning: #f59e0b;
+            --color-border: rgba(94, 82, 64, 0.2);
+            --radius-base: 8px;
+            --space-16: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            background: var(--color-background);
+            color: var(--color-text);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: var(--color-surface);
+            border-radius: var(--radius-base);
+            box-shadow: 0 2px 12px rgba(31, 33, 33, 0.1);
+            padding: var(--space-16);
+        }
+
+        h1 {
+            text-align: center;
+            margin: 0 0 24px 0;
+            color: var(--color-primary);
+            font-size: 24px;
+        }
+
+        h2 {
+            font-size: 18px;
+            margin: 24px 0 12px 0;
+            color: var(--color-primary);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            margin-bottom: 16px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-base);
+            font-size: 14px;
+            background: var(--color-surface);
+            color: var(--color-text);
+            font-family: inherit;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(33, 128, 141, 0.1);
+        }
+
+        input[readonly] {
+            background: #f5f5f5;
+            cursor: not-allowed;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--color-primary);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: var(--radius-base);
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 8px;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: var(--color-primary-hover);
+        }
+
+        .btn--secondary {
+            background: #a8a9a9;
+        }
+
+        .btn--secondary:hover:not(:disabled) {
+            background: #919293;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: var(--radius-base);
+            margin-bottom: 16px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .alert-success {
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: #b45309;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-early {
+            background: rgba(34, 197, 94, 0.15);
+            color: #16a34a;
+        }
+
+        .status-ontime {
+            background: rgba(34, 197, 94, 0.15);
+            color: #16a34a;
+        }
+
+        .status-late {
+            background: rgba(239, 68, 68, 0.15);
+            color: #dc2626;
+        }
+
+        .attendance-list {
+            margin-top: 32px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th, td {
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--color-border);
+            text-align: left;
+        }
+
+        th {
+            background: #f9fafb;
+            color: var(--color-text);
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: rgba(33, 128, 141, 0.02);
+        }
+
+        .info-box {
+            background: rgba(33, 128, 141, 0.08);
+            border: 1px solid rgba(33, 128, 141, 0.2);
+            border-radius: var(--radius-base);
+            padding: 12px 16px;
+            margin-top: 24px;
+            font-size: 13px;
+            color: #134252;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--color-primary);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                margin: 10px;
+                padding: 12px;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px 4px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-      <h1>Attendance Tracker</h1>
-      <form id="attendance-form" autocomplete="off">
-        <label for="name">Name</label>
-        <input type="text" id="name" required placeholder="Enter person's name" />
-        
-        <label for="location-lat">Latitude</label>
-        <input type="number" step="any" id="location-lat" placeholder="Getting location..." readonly />
+        <h1>📍 Attendance Tracker</h1>
 
-        <label for="location-lng">Longitude</label>
-        <input type="number" step="any" id="location-lng" placeholder="Getting location..." readonly />
-        
-        <label for="distance">Distance (meter)</label>
-        <input type="number" id="distance" placeholder="Calculating distance..." readonly />
+        <form id="attendance-form" autocomplete="off">
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" placeholder="Enter person's name" required />
+            </div>
 
-        <div class="error" id="error-msg"></div>
-        <div class="success" id="success-msg"></div>
-        <button type="submit" class="btn" id="submit-btn">Save Attendance</button>
-        <button type="button" class="btn" id="get-location-btn" style="background: #a8a9a9; margin-top: 8px;">Get Location</button>
-      </form>
-      <div class="attendance-list" id="attendance-list">
-        <h2>Attendance Entries</h2>
-        <table id="attendance-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Lat</th>
-              <th>Lng</th>
-              <th>Distance (m)</th>
-              <th>Time</th>
-            </tr>
-          </thead>
-          <tbody>
-          </tbody>
-        </table>
-      </div>
+            <div class="form-group">
+                <label for="location-lat">Latitude</label>
+                <input type="number" step="any" id="location-lat" placeholder="Click 'Get Location'" readonly />
+            </div>
+
+            <div class="form-group">
+                <label for="location-lng">Longitude</label>
+                <input type="number" step="any" id="location-lng" placeholder="Click 'Get Location'" readonly />
+            </div>
+
+            <div class="form-group">
+                <label for="distance">Distance (meters)</label>
+                <input type="number" id="distance" placeholder="Calculating..." readonly />
+            </div>
+
+            <div class="form-group">
+                <label for="status">Status</label>
+                <input type="text" id="status" placeholder="Status will appear here" readonly />
+            </div>
+
+            <div id="error-msg" class="alert alert-error"></div>
+            <div id="warning-msg" class="alert alert-warning"></div>
+            <div id="success-msg" class="alert alert-success"></div>
+
+            <button type="button" class="btn btn--secondary" id="get-location-btn">📍 Get Location</button>
+            <button type="submit" class="btn" id="submit-btn" disabled>💾 Save Attendance</button>
+        </form>
+
+        <div class="attendance-list">
+            <h2>Attendance Records</h2>
+            <table id="attendance-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Distance (m)</th>
+                        <th>Status</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div class="info-box">
+            <strong>Backend Integration Info:</strong>
+            Data will be sent to <code>POST /api/attendance/save</code><br>
+            Fields: name, latitude, longitude, distance, status, recorded_at (Asia/Jakarta)
+        </div>
     </div>
+
     <script>
-      // Simulate a database with an in-memory array
-      let db = [];
-      let referencePoint = { lat: -7.054970805597252, lng: 107.56087285759028 }; // Bandung, Indonesia
-      let currentLocation = null;
-
-      // Haversine formula: calculate distance between two coordinates (in meters)
-      function calculateDistance(lat1, lng1, lat2, lng2) {
-        const R = 6371000; // Earth radius in meters
-        const φ1 = (lat1 * Math.PI) / 180;
-        const φ2 = (lat2 * Math.PI) / 180;
-        const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-        const Δλ = ((lng2 - lng1) * Math.PI) / 180;
-        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
-      }
-// 
-      // Request geolocation from user
-      function getLocation() {
-        const errorElem = document.getElementById('error-msg');
-        errorElem.style.display = 'none';
-
-        if (!navigator.geolocation) {
-          errorElem.textContent = 'Geolocation not supported by this browser.';
-          errorElem.style.display = 'block';
-          return;
-        }
-
-        document.getElementById('get-location-btn').disabled = true;
-        document.getElementById('get-location-btn').textContent = 'Getting location...';
-
-        navigator.geolocation.getCurrentPosition(
-          function(position) {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            const distance = calculateDistance(lat, lng, referencePoint.lat, referencePoint.lng);
-
-            currentLocation = { lat, lng, distance };
-
-            document.getElementById('location-lat').value = lat.toFixed(6);
-            document.getElementById('location-lng').value = lng.toFixed(6);
-            document.getElementById('distance').value = distance.toFixed(2);
-
-            document.getElementById('get-location-btn').disabled = false;
-            document.getElementById('get-location-btn').textContent = 'Update Location';
-
-            if (distance > 10) {
-              errorElem.textContent = `⚠️ Distance ${distance.toFixed(2)}m is > 10m. Attendance REJECTED. You must be within 10m.`;
-              errorElem.style.display = 'block';
-              document.getElementById('submit-btn').disabled = true;
-            } else {
-              document.getElementById('submit-btn').disabled = false;
+        // Configuration
+        const CONFIG = {
+            REFERENCE_POINT: { lat: -7.054970805597252, lng: 107.56087285759028 },
+            TIMEZONE: 'Asia/Jakarta',
+            DISTANCE_LIMIT: 10,
+            ATTENDANCE_START: 7, // 07:00
+            STATUS_WINDOWS: {
+                EARLY: { start: 7, startMin: 0, end: 7, endMin: 44 },
+                ONTIME: { start: 7, startMin: 45, end: 8, endMin: 0 },
+                LATE: { start: 8, startMin: 1 }
             }
-          },
-          function(error) {
-            errorElem.textContent = 'Unable to get location: ' + error.message;
-            errorElem.style.display = 'block';
-            document.getElementById('get-location-btn').disabled = false;
-            document.getElementById('get-location-btn').textContent = 'Get Location';
-          }
-        );
-      }
+        };
 
-      function renderTable() {
-        const tbody = document.getElementById('attendance-table').querySelector('tbody');
-        tbody.innerHTML = '';
-        for(const entry of db) {
-          const tr = document.createElement('tr');
-          tr.innerHTML = '<td>' + 
-            entry.name + '</td><td>' +
-            entry.lat + '</td><td>' +
-            entry.lng + '</td><td>' +
-            entry.distance + '</td><td>' +
-            entry.time + '</td>';
-          tbody.appendChild(tr);
-        }
-      }
+        // State
+        let db = [];
+        let currentLocation = null;
 
-      document.getElementById('get-location-btn').addEventListener('click', getLocation);
-
-      document.getElementById('attendance-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        const name = document.getElementById('name').value.trim();
-        const lat = parseFloat(document.getElementById('location-lat').value);
-        const lng = parseFloat(document.getElementById('location-lng').value);
-        const distance = parseFloat(document.getElementById('distance').value);
-
-        const errorElem = document.getElementById('error-msg');
-        const successElem = document.getElementById('success-msg');
-        errorElem.style.display = 'none';
-        successElem.style.display = 'none';
-
-        if (!name) {
-          errorElem.textContent = "Please enter a name.";
-          errorElem.style.display = 'block';
-          return;
+        // Haversine formula: calculate distance in meters
+        function calculateDistance(lat1, lng1, lat2, lng2) {
+            const R = 6371000;
+            const φ1 = (lat1 * Math.PI) / 180;
+            const φ2 = (lat2 * Math.PI) / 180;
+            const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+            const Δλ = ((lng2 - lng1) * Math.PI) / 180;
+            const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
         }
 
-        if (isNaN(lat) || isNaN(lng) || isNaN(distance)) {
-          errorElem.textContent = "Please get location first.";
-          errorElem.style.display = 'block';
-          return;
+        // Get current time in Jakarta timezone
+        function getJakartaTime() {
+            return new Date().toLocaleString('en-US', { timeZone: CONFIG.TIMEZONE });
         }
 
-        // Reject if distance > 10m
-        if (distance > 10) {
-          errorElem.textContent = `❌ Distance ${distance.toFixed(2)}m exceeds 10m limit. Attendance REJECTED. You must be within 10m.`;
-          errorElem.style.display = 'block';
-          return;
+        // Determine attendance status based on time
+        function getAttendanceStatus(date) {
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: CONFIG.TIMEZONE,
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+            const timeParts = formatter.formatToParts(date);
+            const hour = parseInt(timeParts.find(p => p.type === 'hour').value);
+            const minute = parseInt(timeParts.find(p => p.type === 'minute').value);
+
+            if (hour > CONFIG.STATUS_WINDOWS.EARLY.start || 
+                (hour === CONFIG.STATUS_WINDOWS.EARLY.start && minute <= CONFIG.STATUS_WINDOWS.EARLY.endMin)) {
+                return 'EARLY';
+            } else if (
+                (hour === CONFIG.STATUS_WINDOWS.ONTIME.start && minute >= CONFIG.STATUS_WINDOWS.ONTIME.startMin && minute <= CONFIG.STATUS_WINDOWS.ONTIME.endMin) ||
+                (hour === CONFIG.STATUS_WINDOWS.ONTIME.end && minute <= CONFIG.STATUS_WINDOWS.ONTIME.endMin)
+            ) {
+                return 'ON TIME';
+            } else if (hour > CONFIG.STATUS_WINDOWS.LATE.start || 
+                       (hour === CONFIG.STATUS_WINDOWS.LATE.start && minute >= CONFIG.STATUS_WINDOWS.LATE.startMin)) {
+                return 'LATE';
+            }
+            return 'EARLY';
         }
 
-        // Save to "database"
-        db.push({
-          name,
-          lat: lat.toFixed(6),
-          lng: lng.toFixed(6),
-          distance: distance.toFixed(2),
-          time: new Date().toLocaleString()
+        // Format date to readable string in Jakarta timezone
+        function formatJakartaDate(date) {
+            return new Date(date).toLocaleString('en-US', {
+                timeZone: CONFIG.TIMEZONE,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+        }
+
+        // Get geolocation
+        function getLocation() {
+            const errorElem = document.getElementById('error-msg');
+            const warningElem = document.getElementById('warning-msg');
+            const successElem = document.getElementById('success-msg');
+
+            clearMessages();
+
+            if (!navigator.geolocation) {
+                errorElem.textContent = '❌ Geolocation not supported by this browser.';
+                errorElem.style.display = 'block';
+                return;
+            }
+
+            const btn = document.getElementById('get-location-btn');
+            btn.disabled = true;
+            btn.textContent = '🔄 Getting location...';
+
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    const distance = calculateDistance(lat, lng, CONFIG.REFERENCE_POINT.lat, CONFIG.REFERENCE_POINT.lng);
+
+                    currentLocation = { lat, lng, distance };
+
+                    document.getElementById('location-lat').value = lat.toFixed(6);
+                    document.getElementById('location-lng').value = lng.toFixed(6);
+                    document.getElementById('distance').value = distance.toFixed(2);
+
+                    const status = getAttendanceStatus(new Date());
+                    document.getElementById('status').value = status;
+
+                    btn.disabled = false;
+                    btn.textContent = '📍 Update Location';
+
+                    if (distance > CONFIG.DISTANCE_LIMIT) {
+                        warningElem.textContent = `⚠️ Distance ${distance.toFixed(2)}m exceeds 10m limit. Attendance rejected. You must be within 10m.`;
+                        warningElem.style.display = 'block';
+                        document.getElementById('submit-btn').disabled = true;
+                    } else {
+                        document.getElementById('submit-btn').disabled = false;
+                    }
+                },
+                function(error) {
+                    errorElem.textContent = '❌ Unable to get location: ' + error.message;
+                    errorElem.style.display = 'block';
+                    btn.disabled = false;
+                    btn.textContent = '📍 Get Location';
+                }
+            );
+        }
+
+        // Clear all messages
+        function clearMessages() {
+            document.getElementById('error-msg').style.display = 'none';
+            document.getElementById('warning-msg').style.display = 'none';
+            document.getElementById('success-msg').style.display = 'none';
+        }
+
+        // Render table
+        function renderTable() {
+            const tbody = document.getElementById('attendance-table').querySelector('tbody');
+            tbody.innerHTML = '';
+
+            for (const entry of db) {
+                const tr = document.createElement('tr');
+                const statusClass = `status-${entry.status.toLowerCase().replace(' ', '')}`;
+                tr.innerHTML = `
+                    <td>${entry.name}</td>
+                    <td>${entry.distance}</td>
+                    <td><span class="status-badge ${statusClass}">${entry.status}</span></td>
+                    <td>${entry.time}</td>
+                `;
+                tbody.appendChild(tr);
+            }
+        }
+
+        // Event listeners
+        document.getElementById('get-location-btn').addEventListener('click', getLocation);
+
+        document.getElementById('attendance-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            clearMessages();
+
+            const name = document.getElementById('name').value.trim();
+            const lat = parseFloat(document.getElementById('location-lat').value);
+            const lng = parseFloat(document.getElementById('location-lng').value);
+            const distance = parseFloat(document.getElementById('distance').value);
+            const status = document.getElementById('status').value;
+
+            const errorElem = document.getElementById('error-msg');
+            const successElem = document.getElementById('success-msg');
+
+            // Validation
+            if (!name) {
+                errorElem.textContent = '❌ Please enter a name.';
+                errorElem.style.display = 'block';
+                return;
+            }
+
+            if (isNaN(lat) || isNaN(lng) || isNaN(distance)) {
+                errorElem.textContent = '❌ Please get location first.';
+                errorElem.style.display = 'block';
+                return;
+            }
+
+            if (distance > CONFIG.DISTANCE_LIMIT) {
+                errorElem.textContent = `❌ Distance ${distance.toFixed(2)}m exceeds 10m limit. Attendance REJECTED.`;
+                errorElem.style.display = 'block';
+                return;
+            }
+
+            // Create attendance entry
+            const now = new Date();
+            const entry = {
+                name,
+                lat: lat.toFixed(6),
+                lng: lng.toFixed(6),
+                distance: distance.toFixed(2),
+                status: status || getAttendanceStatus(now),
+                time: formatJakartaDate(now),
+                timestamp: now.toISOString()
+            };
+
+            // Save to in-memory db
+            db.push(entry);
+
+            // TODO: Send to backend API
+            fetch('/api/attendance/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(entry)
+            }).then(res => res.json()).catch(err => console.error(err));
+
+            renderTable();
+
+            successElem.textContent = `✅ Attendance saved! ${name} - ${status} - Distance: ${distance.toFixed(2)}m`;
+            successElem.style.display = 'block';
+
+            // Reset form
+            document.getElementById('name').value = '';
+            document.getElementById('name').focus();
         });
 
+        // Initialize
         renderTable();
-
-        successElem.textContent = `✓ Attendance saved! Distance: ${distance.toFixed(2)}m`;
-        successElem.style.display = 'block';
-
-        document.getElementById('name').value = '';
         document.getElementById('name').focus();
-      });
-
-      // Initial table render
-      renderTable();
-
-      // Focus the name input on load
-      document.getElementById('name').focus();
     </script>
 </body>
 </html>

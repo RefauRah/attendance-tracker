@@ -23,8 +23,7 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
     Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
     Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-//   return R * c;
-return 1;
+  return R * c;
 }
 
 // Ensure table exists (run on cold start)

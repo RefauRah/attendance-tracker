@@ -65,7 +65,7 @@ module.exports = async (req, res) => {
 
       const REFERENCE_LAT = -7.054970805597252;
       const REFERENCE_LNG = 107.56087285759028;
-      const DISTANCE_LIMIT = 10;
+      const DISTANCE_LIMIT = 25;
 
       const calculatedDistance = calculateDistance(
         parseFloat(lat),

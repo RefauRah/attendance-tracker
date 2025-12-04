@@ -236,26 +236,6 @@
                 <input type="text" id="name" placeholder="Enter person's name" required />
             </div>
 
-            <div class="form-group">
-                <label for="location-lat">Latitude</label>
-                <input type="number" step="any" id="location-lat" placeholder="Click 'Get Location'" readonly />
-            </div>
-
-            <div class="form-group">
-                <label for="location-lng">Longitude</label>
-                <input type="number" step="any" id="location-lng" placeholder="Click 'Get Location'" readonly />
-            </div>
-
-            <div class="form-group">
-                <label for="distance">Distance (meters)</label>
-                <input type="number" id="distance" placeholder="Calculating..." readonly />
-            </div>
-
-            <div class="form-group">
-                <label for="status">Status</label>
-                <input type="text" id="status" placeholder="Status will appear here" readonly />
-            </div>
-
             <div id="error-msg" class="alert alert-error"></div>
             <div id="warning-msg" class="alert alert-warning"></div>
             <div id="success-msg" class="alert alert-success"></div>
@@ -278,12 +258,6 @@
                 <tbody></tbody>
             </table>
         </div>
-
-        <!-- <div class="info-box">
-            <strong>Backend Integration Info:</strong>
-            Data will be sent to <code>POST /api/attendance/save</code><br>
-            Fields: name, latitude, longitude, distance, status, recorded_at (Asia/Jakarta)
-        </div> -->
     </div>
 
     <script>
@@ -291,7 +265,7 @@
         const CONFIG = {
             REFERENCE_POINT: { lat: -7.054970805597252, lng: 107.56087285759028 },
             TIMEZONE: 'Asia/Jakarta',
-            DISTANCE_LIMIT: 10,
+            DISTANCE_LIMIT: 25,
             ATTENDANCE_START: 7, // 07:00
             STATUS_WINDOWS: {
                 EARLY: { start: 7, startMin: 0, end: 7, endMin: 44 },
@@ -330,23 +304,28 @@
                 hour12: false
             });
             const timeParts = formatter.formatToParts(date);
-            const hour = parseInt(timeParts.find(p => p.type === 'hour').value);
-            const minute = parseInt(timeParts.find(p => p.type === 'minute').value);
+            const hour = parseInt(timeParts.find(p => p.type === 'hour').value, 10);
+            const minute = parseInt(timeParts.find(p => p.type === 'minute').value, 10);
 
-            if (hour > CONFIG.STATUS_WINDOWS.EARLY.start || 
-                (hour === CONFIG.STATUS_WINDOWS.EARLY.start && minute <= CONFIG.STATUS_WINDOWS.EARLY.endMin)) {
+            // Konversi ke "total menit dari jam 00:00"
+            const totalMinutes = hour * 60 + minute;
+
+            const EARLY_LIMIT = 7 * 60 + 45;   // 07:45  => 465
+            const ONTIME_START = 7 * 60 + 46;  // 07:46  => 466
+            const ONTIME_END = 8 * 60;         // 08:00  => 480
+
+            if (totalMinutes < EARLY_LIMIT) {
                 return 'EARLY';
-            } else if (
-                (hour === CONFIG.STATUS_WINDOWS.ONTIME.start && minute >= CONFIG.STATUS_WINDOWS.ONTIME.startMin && minute <= CONFIG.STATUS_WINDOWS.ONTIME.endMin) ||
-                (hour === CONFIG.STATUS_WINDOWS.ONTIME.end && minute <= CONFIG.STATUS_WINDOWS.ONTIME.endMin)
-            ) {
+            } else if (totalMinutes >= ONTIME_START && totalMinutes <= ONTIME_END) {
                 return 'ON TIME';
-            } else if (hour > CONFIG.STATUS_WINDOWS.LATE.start || 
-                       (hour === CONFIG.STATUS_WINDOWS.LATE.start && minute >= CONFIG.STATUS_WINDOWS.LATE.startMin)) {
+            } else if (totalMinutes > ONTIME_END) {
                 return 'LATE';
             }
+
+            // Fallback (harusnya tidak pernah kena)
             return 'EARLY';
         }
+
 
         // Format date to readable string in Jakarta timezone
         function formatJakartaDate(date) {
@@ -399,7 +378,7 @@
                     btn.textContent = '📍 Update Location';
 
                     if (distance > CONFIG.DISTANCE_LIMIT) {
-                        warningElem.textContent = `⚠️ Distance ${distance.toFixed(2)}m exceeds 10m limit. Attendance rejected. You must be within 10m.`;
+                        warningElem.textContent = `⚠️ Distance ${distance.toFixed(2)}m exceeds 25m limit. Attendance rejected. You must be within 25m.`;
                         warningElem.style.display = 'block';
                         document.getElementById('submit-btn').disabled = true;
                     } else {
@@ -470,7 +449,7 @@
             }
 
             if (distance > CONFIG.DISTANCE_LIMIT) {
-                errorElem.textContent = `❌ Distance ${distance.toFixed(2)}m exceeds 10m limit. Attendance REJECTED.`;
+                errorElem.textContent = `❌ Distance ${distance.toFixed(2)}m exceeds 25m limit. Attendance REJECTED.`;
                 errorElem.style.display = 'block';
                 return;
             }

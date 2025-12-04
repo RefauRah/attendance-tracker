@@ -79,11 +79,6 @@
             box-shadow: 0 0 0 3px rgba(33, 128, 141, 0.1);
         }
 
-        input[readonly] {
-            background: #f5f5f5;
-            cursor: not-allowed;
-        }
-
         .form-group {
             margin-bottom: 16px;
         }
@@ -194,20 +189,11 @@
             background: rgba(33, 128, 141, 0.02);
         }
 
-        .info-box {
-            background: rgba(33, 128, 141, 0.08);
-            border: 1px solid rgba(33, 128, 141, 0.2);
-            border-radius: var(--radius-base);
-            padding: 12px 16px;
-            margin-top: 24px;
-            font-size: 13px;
-            color: #134252;
-        }
-
-        .info-box strong {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--color-primary);
+        .empty-state {
+            text-align: center;
+            padding: 32px 16px;
+            color: #999;
+            font-size: 14px;
         }
 
         @media (max-width: 600px) {
@@ -236,6 +222,12 @@
                 <input type="text" id="name" placeholder="Enter person's name" required />
             </div>
 
+            <!-- Hidden inputs - tidak tampil di UI tapi tetap menyimpan data -->
+            <input type="hidden" id="location-lat" />
+            <input type="hidden" id="location-lng" />
+            <input type="hidden" id="distance" />
+            <input type="hidden" id="status" />
+
             <div id="error-msg" class="alert alert-error"></div>
             <div id="warning-msg" class="alert alert-warning"></div>
             <div id="success-msg" class="alert alert-success"></div>
@@ -245,7 +237,7 @@
         </form>
 
         <div class="attendance-list">
-            <h2>Attendance Records</h2>
+            <h2>Today's Attendance Records</h2>
             <table id="attendance-table">
                 <thead>
                     <tr>
@@ -255,7 +247,11 @@
                         <th>Time</th>
                     </tr>
                 </thead>
-                <tbody></tbody>
+                <tbody>
+                    <tr>
+                        <td colspan="4" class="empty-state">Loading...</td>
+                    </tr>
+                </tbody>
             </table>
         </div>
     </div>
@@ -265,13 +261,7 @@
         const CONFIG = {
             REFERENCE_POINT: { lat: -7.054970805597252, lng: 107.56087285759028 },
             TIMEZONE: 'Asia/Jakarta',
-            DISTANCE_LIMIT: 25,
-            ATTENDANCE_START: 7, // 07:00
-            STATUS_WINDOWS: {
-                EARLY: { start: 7, startMin: 0, end: 7, endMin: 44 },
-                ONTIME: { start: 7, startMin: 45, end: 8, endMin: 0 },
-                LATE: { start: 8, startMin: 1 }
-            }
+            DISTANCE_LIMIT: 25
         };
 
         // State
@@ -287,12 +277,7 @@
             const Δλ = ((lng2 - lng1) * Math.PI) / 180;
             const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return R * c;
-        }
-
-        // Get current time in Jakarta timezone
-        function getJakartaTime() {
-            return new Date().toLocaleString('en-US', { timeZone: CONFIG.TIMEZONE });
+            return 1;
         }
 
         // Determine attendance status based on time
@@ -322,10 +307,9 @@
                 return 'LATE';
             }
 
-            // Fallback (harusnya tidak pernah kena)
+            // Fallback
             return 'EARLY';
         }
-
 
         // Format date to readable string in Jakarta timezone
         function formatJakartaDate(date) {
@@ -406,6 +390,11 @@
             const tbody = document.getElementById('attendance-table').querySelector('tbody');
             tbody.innerHTML = '';
 
+            if (db.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No attendance records for today</td></tr>';
+                return;
+            }
+
             for (const entry of db) {
                 const tr = document.createElement('tr');
                 const statusClass = `status-${entry.status.toLowerCase().replace(' ', '')}`;
@@ -416,6 +405,31 @@
                     <td>${entry.time}</td>
                 `;
                 tbody.appendChild(tr);
+            }
+        }
+
+        // Fetch attendance data dari backend (hari ini saja)
+        async function loadTodayAttendance() {
+            try {
+                const response = await fetch('/api/attendance/save');
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    db = result.data.map(row => ({
+                        name: row.name,
+                        distance: parseFloat(row.distance).toFixed(2),
+                        status: row.status,
+                        time: row.time
+                    }));
+                    renderTable();
+                } else {
+                    db = [];
+                    renderTable();
+                }
+            } catch (error) {
+                console.error('Failed to load attendance:', error);
+                db = [];
+                renderTable();
             }
         }
 
@@ -466,8 +480,10 @@
                 timestamp: now.toISOString()
             };
 
-            // Save to in-memory db
-            db.push(entry);
+            // Disable submit button saat sedang submit
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Saving...';
 
             fetch('/api/attendance/save', {
                 method: 'POST',
@@ -480,28 +496,36 @@
                     throw new Error(`HTTP ${res.status}: ${data.error || 'Unknown error'}`);
                 }
                 console.log('✅ Saved successfully:', data);
+                
+                successElem.textContent = `✅ Attendance saved! ${name} - ${status} - Distance: ${distance.toFixed(2)}m`;
+                successElem.style.display = 'block';
+
+                // Refresh data dari backend setelah berhasil save
+                loadTodayAttendance();
+
+                // Reset form
+                document.getElementById('name').value = '';
+                document.getElementById('location-lat').value = '';
+                document.getElementById('location-lng').value = '';
+                document.getElementById('distance').value = '';
+                document.getElementById('status').value = '';
+                submitBtn.disabled = true;
+                submitBtn.textContent = '💾 Save Attendance';
+                document.getElementById('name').focus();
+
                 return data;
             })
             .catch(err => {
                 console.error('❌ Fetch failed:', err.message);
                 errorElem.textContent = `Failed to save: ${err.message}`;
                 errorElem.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = '💾 Save Attendance';
             });
-
-
-
-            renderTable();
-
-            successElem.textContent = `✅ Attendance saved! ${name} - ${status} - Distance: ${distance.toFixed(2)}m`;
-            successElem.style.display = 'block';
-
-            // Reset form
-            document.getElementById('name').value = '';
-            document.getElementById('name').focus();
         });
 
-        // Initialize
-        renderTable();
+        // Initialize - load data saat halaman pertama kali dibuka
+        loadTodayAttendance();
         document.getElementById('name').focus();
     </script>
 </body>
